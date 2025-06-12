@@ -21,6 +21,40 @@ const verifyToken = (token: string): { username: string } | null => {
   }
 }
 
+// Helper function to validate base64 image
+const validateBase64Image = (base64String: string): boolean => {
+  // Check if it's a valid data URL for JPEG
+  const dataUrlPattern = /^data:image\/jpeg;base64,/
+  if (!dataUrlPattern.test(base64String)) {
+    return false
+  }
+  
+  // Extract base64 data (remove data URL prefix)
+  const base64Data = base64String.split(',')[1]
+  if (!base64Data) {
+    return false
+  }
+  
+  try {
+    // Validate base64 format
+    const buffer = Buffer.from(base64Data, 'base64')
+    
+    // Check file size (1MB = 1,048,576 bytes)
+    if (buffer.length > 1048576) {
+      return false
+    }
+    
+    // Basic JPEG header validation (JPEG files start with FF D8)
+    if (buffer.length >= 2 && buffer[0] === 0xFF && buffer[1] === 0xD8) {
+      return true
+    }
+    
+    return false
+  } catch (error) {
+    return false
+  }
+}
+
 // Register endpoint
 auth.post('/register', async (c) => {
   try {
@@ -79,6 +113,7 @@ auth.post('/register', async (c) => {
     const user: User = {
       username,
       description: '', // Empty description by default
+      profileImageBase64: '', // Empty profile image by default
       createdAt: now,
       updatedAt: now
     }
@@ -110,7 +145,7 @@ auth.post('/register', async (c) => {
       success: true,
       message: 'User registered successfully',
       token,
-      user: { username, description: '', createdAt: now, updatedAt: now }
+      user: { username, description: '', profileImageBase64: '', createdAt: now, updatedAt: now }
     }, 201)
 
   } catch (error) {
@@ -194,6 +229,7 @@ auth.post('/login', async (c) => {
       user: { 
         username: user.username, 
         description: user.description, 
+        profileImageBase64: user.profileImageBase64 || '',
         createdAt: user.createdAt, 
         updatedAt: user.updatedAt 
       }
@@ -241,13 +277,21 @@ auth.put('/profile', async (c) => {
       }, 400)
     }
 
-    const { username: newUsername, description } = body
+    const { username: newUsername, description, profileImageBase64 } = body
 
     // Validate inputs
     if (newUsername && newUsername.length < 3) {
       return c.json<ProfileUpdateResponse>({ 
         success: false, 
         message: 'Username must be at least 3 characters long' 
+      }, 400)
+    }
+
+    // Validate profile image if provided
+    if (profileImageBase64 && profileImageBase64.length > 0 && !validateBase64Image(profileImageBase64)) {
+      return c.json<ProfileUpdateResponse>({ 
+        success: false, 
+        message: 'Invalid image format. Please upload a JPEG image under 1MB.' 
       }, 400)
     }
 
@@ -305,6 +349,9 @@ auth.put('/profile', async (c) => {
     if (description !== undefined) {
       updateData.description = description
     }
+    if (profileImageBase64 !== undefined) {
+      updateData.profileImageBase64 = profileImageBase64
+    }
 
     // Update user record using the current username
     const result = await usersCollection.updateOne(
@@ -341,6 +388,7 @@ auth.put('/profile', async (c) => {
       user: {
         username: updatedUser.username,
         description: updatedUser.description,
+        profileImageBase64: updatedUser.profileImageBase64 || '',
         createdAt: updatedUser.createdAt,
         updatedAt: updatedUser.updatedAt
       }

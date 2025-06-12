@@ -2,6 +2,7 @@ export interface User {
   _id?: string
   username: string
   description: string
+  profileImageBase64?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -27,6 +28,7 @@ export interface RegisterRequest {
 export interface UpdateProfileRequest {
   username?: string
   description?: string
+  profileImageBase64?: string
 }
 
 export interface AuthResponse {
