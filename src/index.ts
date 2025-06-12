@@ -4,12 +4,13 @@ import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { connectToDatabase } from './database.js'
 import authRoutes from './routes/auth.js'
+import postsRoutes from './routes/posts.js'
 
 const app = new Hono()
 
 // CORS middleware
 app.use('/*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Frontend dev server and potential other origins
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // Frontend dev server and potential other origins
   credentials: true,
 }))
 
@@ -18,8 +19,16 @@ app.get('/', (c) => {
   return c.json({ message: 'Blog Backend API is running!' })
 })
 
+// API Health check
+app.get('/api/health', (c) => {
+  return c.json({ status: 'OK', message: 'API is healthy' })
+})
+
 // Auth routes
 app.route('/api/auth', authRoutes)
+
+// Posts routes
+app.route('/api/posts', postsRoutes)
 
 const port = parseInt(process.env.PORT || '3000')
 

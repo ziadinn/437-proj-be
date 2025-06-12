@@ -42,4 +42,43 @@ export interface ProfileUpdateResponse {
   success: boolean
   message: string
   user?: Omit<User, '_id'>
+}
+
+export interface Post {
+  _id?: string
+  title: string
+  description?: string
+  content: string
+  author: string
+  slug: string
+  published: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CreatePostRequest {
+  title: string
+  description?: string
+  content: string
+  published?: boolean
+}
+
+export interface UpdatePostRequest {
+  title?: string
+  description?: string
+  content?: string
+  published?: boolean
+}
+
+export interface PostResponse {
+  success: boolean
+  message: string
+  post?: Post
+}
+
+export interface PostsListResponse {
+  success: boolean
+  message: string
+  posts?: Post[]
+  total?: number
 } 
