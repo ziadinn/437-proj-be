@@ -185,6 +185,64 @@ posts.get('/user/:username', async (c) => {
   }
 })
 
+// GET /api/posts/my/all - Get all posts by authenticated user (including drafts)
+posts.get('/my/all', async (c) => {
+  try {
+    // Check authentication
+    const authHeader = c.req.header('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return c.json<PostsListResponse>({
+        success: false,
+        message: 'Authorization token required'
+      }, 401)
+    }
+    
+    const token = authHeader.substring(7)
+    const decoded = verifyToken(token)
+    if (!decoded) {
+      return c.json<PostsListResponse>({
+        success: false,
+        message: 'Invalid or expired token'
+      }, 401)
+    }
+    
+    const db = getDatabase()
+    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    
+    // Get ALL posts by this user (including drafts)
+    const posts = await postsCollection
+      .find({ author: decoded.username })
+      .sort({ createdAt: -1 })
+      .toArray()
+    
+    const postsResponse = posts.map(post => ({
+      _id: post._id?.toString(),
+      title: post.title,
+      description: post.description,
+      content: post.content,
+      author: post.author,
+      slug: post.slug,
+      published: post.published,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt
+    }))
+    
+    return c.json<PostsListResponse>({
+      success: true,
+      message: `Posts by ${decoded.username} retrieved successfully`,
+      posts: postsResponse,
+      total: posts.length
+    })
+    
+  } catch (error) {
+    console.error('Get my posts error:', error)
+    return c.json<PostsListResponse>({
+      success: false,
+      message: 'Failed to retrieve your posts'
+    }, 500)
+  }
+})
+
 // GET /api/posts/:id - Get specific post by ID
 posts.get('/:id', async (c) => {
   try {
@@ -209,8 +267,22 @@ posts.get('/:id', async (c) => {
       }, 404)
     }
     
-    // Only return published posts for public access
-    if (!post.published) {
+    // Check if the post is published OR if the user is the author
+    let canView = post.published
+    
+    if (!canView) {
+      // Check if user is authenticated and is the author
+      const authHeader = c.req.header('Authorization')
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7)
+        const decoded = verifyToken(token)
+        if (decoded && decoded.username === post.author) {
+          canView = true
+        }
+      }
+    }
+    
+    if (!canView) {
       return c.json<PostResponse>({
         success: false,
         message: 'Post not found'
