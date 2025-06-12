@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Backend for simple blog site",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "public/index.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node public/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
