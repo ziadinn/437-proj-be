@@ -174,7 +174,7 @@ test_endpoint "Register with empty body (should fail)" "400" \
 test_endpoint "Register with invalid JSON (should fail)" "400" \
     -X POST "$BASE_URL/api/auth/register" \
     -H "Content-Type: application/json" \
-    -d '{"username":"test"invalid json}'
+    -d '{"username":"test","invalid":"json"'
 
 # Test 15: Extra fields (should still work)
 test_endpoint "Register with extra fields (should work)" "201" \

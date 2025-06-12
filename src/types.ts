@@ -1,6 +1,7 @@
 export interface User {
   _id?: string
   username: string
+  description: string
   createdAt: Date
   updatedAt: Date
 }
@@ -23,9 +24,20 @@ export interface RegisterRequest {
   password: string
 }
 
+export interface UpdateProfileRequest {
+  username?: string
+  description?: string
+}
+
 export interface AuthResponse {
   success: boolean
   message: string
   token?: string
+  user?: Omit<User, '_id'>
+}
+
+export interface ProfileUpdateResponse {
+  success: boolean
+  message: string
   user?: Omit<User, '_id'>
 } 
