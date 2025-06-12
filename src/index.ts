@@ -8,9 +8,29 @@ import postsRoutes from './routes/posts.js'
 
 const app = new Hono()
 
-// CORS middleware
+// CORS middleware - Allow frontend origins
+const allowedOrigins = [
+  'http://localhost:5173', 
+  'http://localhost:5174', 
+  'http://localhost:3000',
+  // Add your production frontend URL here
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+]
+
+// Function to check if origin is allowed
+const isOriginAllowed = (origin: string) => {
+  if (allowedOrigins.includes(origin)) return true
+  // Allow any vercel app domain
+  return /https:\/\/.*\.vercel\.app$/.test(origin)
+}
+
 app.use('/*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // Frontend dev server and potential other origins
+  origin: (origin, c) => {
+    if (!origin || isOriginAllowed(origin)) {
+      return origin
+    }
+    return null
+  },
   credentials: true,
 }))
 
