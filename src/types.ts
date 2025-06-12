@@ -1,3 +1,5 @@
+import { ObjectId } from 'mongodb'
+
 export interface User {
   _id?: string
   username: string
@@ -44,6 +46,20 @@ export interface ProfileUpdateResponse {
   user?: Omit<User, '_id'>
 }
 
+// Database Post interface with ObjectId
+export interface DbPost {
+  _id?: ObjectId
+  title: string
+  description?: string
+  content: string
+  author: string
+  slug: string
+  published: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+// API Post interface for responses
 export interface Post {
   _id?: string
   title: string

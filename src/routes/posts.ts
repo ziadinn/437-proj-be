@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import jwt from 'jsonwebtoken'
 import { ObjectId } from 'mongodb'
 import { getDatabase } from '../database.js'
-import { Post, CreatePostRequest, UpdatePostRequest, PostResponse, PostsListResponse } from '../types.js'
+import { Post, DbPost, CreatePostRequest, UpdatePostRequest, PostResponse, PostsListResponse } from '../types.js'
 
 const posts = new Hono()
 
@@ -44,7 +44,7 @@ const generateSlug = (title: string): string => {
 // Helper function to ensure unique slug
 const ensureUniqueSlug = async (baseSlug: string, excludeId?: string): Promise<string> => {
   const db = getDatabase()
-  const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+  const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
   
   let slug = baseSlug
   let counter = 1
@@ -98,7 +98,7 @@ const validatePostData = (data: CreatePostRequest | UpdatePostRequest): string |
 posts.get('/', async (c) => {
   try {
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     // Get query parameters for pagination
     const page = parseInt(c.req.query('page') || '1')
@@ -149,7 +149,7 @@ posts.get('/user/:username', async (c) => {
   try {
     const username = c.req.param('username')
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     // Get only published posts by this user
     const posts = await postsCollection
@@ -207,7 +207,7 @@ posts.get('/my/all', async (c) => {
     }
     
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     // Get ALL posts by this user (including drafts)
     const posts = await postsCollection
@@ -256,7 +256,7 @@ posts.get('/:id', async (c) => {
     }
     
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     const post = await postsCollection.findOne({ _id: new ObjectId(postId) })
     
@@ -362,7 +362,7 @@ posts.post('/', async (c) => {
     const uniqueSlug = await ensureUniqueSlug(baseSlug)
     
     const now = new Date()
-    const post: Post = {
+    const post: DbPost = {
       title: title.trim(),
       description: description?.trim() || '',
       content: content.trim(),
@@ -374,7 +374,7 @@ posts.post('/', async (c) => {
     }
     
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     const result = await postsCollection.insertOne(post)
     
@@ -434,7 +434,7 @@ posts.put('/:id', async (c) => {
     }
     
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     // Find the post
     const existingPost = await postsCollection.findOne({ _id: new ObjectId(postId) })
@@ -474,7 +474,7 @@ posts.put('/:id', async (c) => {
     }
     
     // Prepare update data
-    const updateData: Partial<Post> = {
+    const updateData: Partial<DbPost> = {
       updatedAt: new Date()
     }
     
@@ -571,7 +571,7 @@ posts.delete('/:id', async (c) => {
     }
     
     const db = getDatabase()
-    const postsCollection = db.collection<Post>(process.env.POSTS_COLLECTION_NAME || 'posts')
+    const postsCollection = db.collection<DbPost>(process.env.POSTS_COLLECTION_NAME || 'posts')
     
     // Find the post
     const existingPost = await postsCollection.findOne({ _id: new ObjectId(postId) })
